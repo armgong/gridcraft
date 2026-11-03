@@ -1,0 +1,40 @@
+name: Windows Portable Zip
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/cjk-fallback-baseline]
+jobs:
+  build-portable:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        shell: powershell
+        run: cargo build --release
+
+      - name: Create portable zip
+        shell: powershell
+        run: |
+          $out = "dist"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $bin = "target\release\gridcraft.exe"
+          if (-not (Test-Path $bin)) {
+            $bin = Get-ChildItem -Path "target\release" -Filter *.exe | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not (Test-Path $bin)) {
+            throw "No .exe binary found under target/release"
+          }
+          Copy-Item $bin "$out\gridcraft.exe"
+          Compress-Archive -Path "$out\gridcraft.exe" -DestinationPath "$out\gridcraft-portable.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridcraft-windows-portable
+          path: dist/*.zip
