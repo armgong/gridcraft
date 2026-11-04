@@ -23,15 +23,29 @@ jobs:
         run: |
           $out = "dist"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
-          $bin = "target\release\gridcraft.exe"
-          if (-not (Test-Path $bin)) {
-            $bin = Get-ChildItem -Path "target\release" -Filter *.exe | Select-Object -First 1 -ExpandProperty FullName
+
+          $targets = @(
+            "gridcraft.exe",
+            "gridcraft-cli.exe"
+          )
+
+          $zipFiles = @()
+          foreach ($name in $targets) {
+            $src = "target\release\$name"
+            if (-not (Test-Path $src)) {
+              $src = Get-ChildItem -Path "target\release" -Filter $name | Select-Object -First 1 -ExpandProperty FullName
+            }
+            if (Test-Path $src) {
+              Copy-Item $src "$out\$name"
+              $zipFiles += "$out\$name"
+            }
           }
-          if (-not (Test-Path $bin)) {
-            throw "No .exe binary found under target/release"
+
+          if ($zipFiles.Count -eq 0) {
+            throw "No gridcraft binaries found under target/release"
           }
-          Copy-Item $bin "$out\gridcraft.exe"
-          Compress-Archive -Path "$out\gridcraft.exe" -DestinationPath "$out\gridcraft-portable.zip" -Force
+
+          Compress-Archive -Path $zipFiles -DestinationPath "$out\gridcraft-portable.zip" -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
