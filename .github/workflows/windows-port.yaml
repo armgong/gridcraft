@@ -1,0 +1,54 @@
+name: Windows Portable Zip
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build-portable:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        shell: powershell
+        run: cargo build --release
+
+      - name: Create portable zip
+        shell: powershell
+        run: |
+          $out = "dist"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+
+          $targets = @(
+            "gridcraft.exe",
+            "gridcraft-cli.exe"
+          )
+
+          $zipFiles = @()
+          foreach ($name in $targets) {
+            $src = "target\release\$name"
+            if (-not (Test-Path $src)) {
+              $src = Get-ChildItem -Path "target\release" -Filter $name | Select-Object -First 1 -ExpandProperty FullName
+            }
+            if (Test-Path $src) {
+              Copy-Item $src "$out\$name"
+              $zipFiles += "$out\$name"
+            }
+          }
+
+          if ($zipFiles.Count -eq 0) {
+            throw "No gridcraft binaries found under target/release"
+          }
+
+          Compress-Archive -Path $zipFiles -DestinationPath "$out\gridcraft-portable.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gridcraft-windows-portable
+          path: dist/*.zip
