@@ -138,7 +138,8 @@ impl Precedents<'_> {
                 _ => self.dynamic = true,
             },
             Expr::Call(n, _)
-                if matches!(n.as_str(), "INDIRECT" | "OFFSET" | "NOW" | "TODAY" | "RAND" | "RANDBETWEEN" | "RANDARRAY" | "CELL" | "INFO") =>
+                if matches!(n.as_str(), "INDIRECT" | "OFFSET" | "NOW" | "TODAY" | "RAND" | "RANDBETWEEN" | "RANDARRAY" | "CELL" | "INFO")
+                   || gridcraft_functions::lookup(n).is_some_and(|spec| spec.volatile) =>
             {
                 self.dynamic = true
             }
