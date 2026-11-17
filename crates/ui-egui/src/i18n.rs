@@ -233,7 +233,12 @@ impl Language {
     pub fn tr_fill(self, template: &str, values: &[(&str, &str)]) -> String {
         fill(self.tr(template), values)
     }
-
+    /// The display form of a comment or note author. A stored author is user data and shows as
+    /// written — a name may carry a `|`, which `tr` reads as a context separator — so only the
+    /// engine's built-in default name is translated, and it reads in the interface language.
+    pub fn author_name(self, author: &str) -> String {
+        if author == "GridCraft User" { self.tr(author).to_owned() } else { author.to_owned() }
+    }
     pub(crate) fn tr_error(self, message: &str) -> String {
         let message = if message.starts_with("command `") { crate::clean_error(message) } else { message.to_owned() };
 
