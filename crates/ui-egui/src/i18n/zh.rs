@@ -2232,20 +2232,12 @@ pub(super) fn translate(text: &str) -> Option<&'static str> {
         "The button changed while the question was open, so nothing ran. Press it again to see what it runs now." => {
             "问题打开期间按钮已更改，未运行任何操作。再次按下可查看它现在运行的内容。"
         }
-        "My list has headers" => "数据包含标题",
-        "Sort by" => "主要关键字",
-        "Then by" => "次要关键字",
-        "Cell Values" => "单元格值",
-        "Cell Color" => "单元格颜色",
-        "A to Z" => "A 到 Z",
-        "Z to A" => "Z 到 A",
         "Add Level" => "添加条件",
         "Delete Level" => "删除条件",
         "Copy Level" => "复制条件",
         "Move Up" => "上移",
         "Move Down" => "下移",
         "Order" => "次序",
-        "Sort On" => "排序依据",
         "Sort|Column" => "列",
         "Column {letters}" => "列 {letters}",
         "Smallest to Largest" => "从小到大",
