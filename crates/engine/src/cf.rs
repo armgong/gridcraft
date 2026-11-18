@@ -319,6 +319,11 @@ impl CfCache {
     pub fn new() -> Self {
         Self::default()
     }
+	
+    /// [`crate::tables::shown_edges`] of `t`, found once per cache.
+    pub fn table_edges(&mut self, sh: &Sheet, t: &Table) -> crate::tables::ShownEdges {
+        *self.table_edges.entry(t.range).or_insert_with(|| crate::tables::shown_edges(sh, t))
+    }
 
     /// Uses a document-owned bank so constructing a fresh paint cache cannot reset allowance.
     pub fn with_budget(budget: crate::workload::AnalysisBudget) -> Self {
@@ -381,10 +386,7 @@ impl CfCache {
             frame_meter: crate::workload::Meter::new(budget),
             results: usable.then_some(results),
         }
-    /// [`crate::tables::shown_edges`] of `t`, found once per cache.
-    pub fn table_edges(&mut self, sh: &Sheet, t: &Table) -> crate::tables::ShownEdges {
-        *self.table_edges.entry(t.range).or_insert_with(|| crate::tables::shown_edges(sh, t))
-    }
+	}
 
     /// Conditional look of `c`, or `None` when no rule applies.
     pub fn look(&mut self, wb: &Workbook, sheet: usize, c: CellRef) -> Option<CfLook> {
