@@ -333,6 +333,7 @@ impl CfCache {
             stats_source: None,
             frame_meter: crate::workload::Meter::new(budget),
             results: None,
+			table_edges: HashMap::new(),
         }
     }
 
@@ -385,6 +386,7 @@ impl CfCache {
             stats_source: Some((Arc::downgrade(wb), revision)),
             frame_meter: crate::workload::Meter::new(budget),
             results: usable.then_some(results),
+			table_edges: HashMap::new(),
         }
 	}
 
