@@ -197,17 +197,18 @@ impl Language {
     /// A label that needs two translations (Home's text "Orientation" vs Page Layout's print
     /// "Orientation") is keyed `context|label`: English shows only the part after the `|`.
     pub fn tr(self, text: &str) -> &str {
-        self.raw(text).unwrap_or_else(|| {
-            #[cfg(not(target_arch = "wasm32"))]
-            record_untranslated(self, text);
-            text.rsplit_once('|').map_or(text, |(_, label)| label)
-        })
+        self.translated(text).unwrap_or_else(|| text.rsplit_once('|').map_or(text, |(_, label)| label))
     }
 
-    /// The catalog translation of `text`, or `None`. `tr` adds the untranslated-label trace on
-    /// top; callers holding runtime data (an error message with a file name in it) use `raw`
-    /// directly so the trace stays a report of interface labels only.
-    fn raw(self, text: &str) -> Option<&'static str> {
+    /// A ribbon tab's name. Where a language names the tab differently from a command with the
+    /// same English label (Russian: the Insert tab is «Вставка», the Insert button «Вставить»), its
+    /// catalog keys the tab `Tab|name`; every other language falls back to the plain label.
+    pub fn tr_tab(self, tab: &str) -> &str {
+        self.translated(&format!("Tab|{tab}")).unwrap_or_else(|| self.tr(tab))
+    }
+
+    /// The catalog entry for `text`, if this language has one.
+    fn translated(self, text: &str) -> Option<&'static str> {
         match self {
             Self::En => None,
             Self::Es => es::translate(text),
@@ -243,18 +244,8 @@ impl Language {
     pub(crate) fn tr_error(self, message: &str) -> String {
         let message = if message.starts_with("command `") { crate::clean_error(message) } else { message.to_owned() };
 
-        // Runtime data (a file name, a cell reference) must not enter the untranslated-label
-        // trace, so the complete message is looked up without tracing; only the template match
-        // below fills the slots, and it translates captured values from the catalog without
-        // tracing them either.
+        let translated = self.tr(&message);
         let fallback = message.rsplit_once('|').map_or(message.as_str(), |(_, label)| label);
-        let translated = self.raw(&message).unwrap_or(fallback);
-
-        if translated == fallback
-            && let Some(filled) = self.error_template(&message)
-        {
-            return filled;
-        }
 
         if translated == fallback { message } else { translated.to_owned() }
     }
@@ -279,26 +270,7 @@ impl Language {
             Self::PtBr => Some((pt_functions::DESCRIPTIONS, pt_functions::ARGUMENTS)),
             _ => None,
         }
-    }
-
-    /// A message the engine built with data in it (`We can't open 'book.xlsx': …`), matched
-    /// against the templates of this language: the fixed text must line up and the data is
-    /// carried over, translated too when it is an interface phrase of its own.
-    fn error_template(self, message: &str) -> Option<String> {
-        let table = match self {
-            Self::Zh => zh_errors::TEMPLATES,
-            _ => return None,
-        };
-        table.iter().find_map(|(english, localized)| {
-            let values = fill_template(english, message)?;
-            // A captured value is user data (a file or sheet name may carry a `|`, which `tr`
-            // reads as a context separator): translate it only when it is a known interface
-            // phrase, and look it up without tracing — this is not an interface label.
-            let values: Vec<String> =
-                values.iter().map(|value| if value.contains('|') { value.clone() } else { self.raw(value).unwrap_or(value).to_string() }).collect();
-            splice_template(localized, &values)
-        })
-    }
+    } 
 }
 
 /// The literal parts of a template, with a slot between each pair: `a{x}b` → `["a", "b"]`.
@@ -522,11 +494,11 @@ mod tests {
     fn every_catalog_has_distinct_diagram_and_decorative_text() {
         for language in Language::ALL.into_iter().filter(|l| *l != Language::En) {
             let code = language.code();
-            let diagram = language.raw("Diagram");
+            let diagram = language.translated("Diagram");
             assert!(diagram.is_some(), "{code}: Diagram");
-            assert!(language.raw("Decorative Text").is_some(), "{code}: Decorative Text");
+            assert!(language.translated("Decorative Text").is_some(), "{code}: Decorative Text");
             for chart in ["Chart", "Charts"] {
-                if let Some(chart_text) = language.raw(chart) {
+                if let Some(chart_text) = language.translated(chart) {
                     assert_ne!(diagram, Some(chart_text), "{code}: Diagram equals {chart}");
                 }
             }
@@ -577,6 +549,13 @@ mod tests {
             assert_eq!(language.tr("Sheet1!A1"), "Sheet1!A1");
             assert_eq!(language.tr("Not in any catalog|Untranslated"), "Untranslated");
         }
+        // The Insert tab and the Insert command have different Russian names; elsewhere the tab
+        // name is the plain label.
+        assert_eq!(Language::Ru.tr_tab("Insert"), "Вставка");
+        assert_eq!(Language::Ru.tr("Insert"), "Вставить");
+        assert_eq!(Language::Ru.tr_tab("Data"), "Данные");
+        assert_eq!(Language::Es.tr_tab("Insert"), Language::Es.tr("Insert"));
+        assert_eq!(Language::En.tr_tab("Insert"), "Insert");
         // A `context|label` key shows only its label in English.
         assert_eq!(Language::En.tr("Page Layout|Orientation"), "Orientation");
         // Errors drop the `command `id`:` prefix before translating; an untranslated one stays whole.
