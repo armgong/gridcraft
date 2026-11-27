@@ -140,7 +140,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
                             }
                             let mut kind = values.get("distribution").and_then(Json::as_str).unwrap_or("uniform").to_string();
                             let label = ui.label("Distribution:");
-                            craft_ui::ComboBox::from_id_salt("distribution")
+                            egui::ComboBox::from_id_salt("distribution")
                                 .selected_text(distribution_label(&kind))
                                 .show_ui(ui, |ui| {
                                     for k in ["uniform", "triangular", "normal", "lognormal", "poisson", "binomial", "hypergeometric"] {
@@ -175,7 +175,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
         let label = ui.label("Sampling:");
         let mut method = d.values.get("method").and_then(Json::as_str).unwrap_or("random").to_string();
         let selected = if method == "latinHypercube" { "Latin Hypercube" } else { "Random Monte Carlo" };
-        craft_ui::ComboBox::from_id_salt("mcMethod")
+        egui::ComboBox::from_id_salt("mcMethod")
             .selected_text(selected)
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut method, "random".into(), "Random Monte Carlo");

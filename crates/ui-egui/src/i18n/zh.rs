@@ -2244,9 +2244,6 @@ pub(super) fn translate(text: &str) -> Option<&'static str> {
         "This workbook has a PivotTable with a Distinct Count value field. In the .xlsx file it is stored as a plain Count plus a marker that only GridCraft reads, so Excel's Refresh turns it into a plain count." => {
             "此工作簿中有一个值字段为“非重复计数”的数据透视表。在 .xlsx 文件中，它被保存为普通计数，并附带只有 GridCraft 能读取的标记，因此在 Excel 中刷新会将其变为普通计数。"
         }
-        "My list has headers" => "数据包含标题",
-        "Sort by" => "主要关键字",
-        "Then by" => "次要关键字",
         "Add Level" => "添加条件",
         "Delete Level" => "删除条件",
         "Copy Level" => "复制条件",

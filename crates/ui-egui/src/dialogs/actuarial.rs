@@ -48,7 +48,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
     ui.label(format!("{} matching functions — open the list to choose.", hits.len()));
     let function_label = ui.label("Actuarial function:");
     let menu_was_open = egui::Popup::is_any_open(ui.ctx());
-    let picker = craft_ui::ComboBox::from_id_salt("actuarialFunction")
+    let picker = egui::ComboBox::from_id_salt("actuarialFunction")
         .selected_text(&name)
         .width(350.0)
         .show_ui(ui, |ui| {
@@ -60,7 +60,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
         })
         .response
         .labelled_by(function_label.id);
-    if menu_was_open || picker.has_focus() || craft_ui::ComboBox::is_open(ui.ctx(), picker.id) {
+    if menu_was_open || picker.has_focus() || egui::ComboBox::is_open(ui.ctx(), picker.id) {
         ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Enter));
     }
     if name != selected {
