@@ -50,14 +50,23 @@ pub(super) fn input_template(cell: &str) -> Json {
 fn text(ui: &mut egui::Ui, values: &mut Map<String, Json>, key: &str, label: &str) {
     ui.horizontal(|ui| {
         let label = ui.label(label);
-        let mut value = values
+        let old = values
             .get(key)
             .map(|v| match v {
                 Json::String(s) => s.clone(),
                 _ => v.to_string(),
             })
             .unwrap_or_default();
-        if ui.add(egui::TextEdit::singleline(&mut value).desired_width(110.0)).labelled_by(label.id).changed() {
+        let mut value = old.clone();
+
+        let resp = ui.add(
+            egui::TextEdit::singleline(&mut value)
+                .desired_width(110.0)
+                .id_source(format!("mc_text_{key}"))
+        )
+        .labelled_by(label.id);
+
+        if resp.changed() && value != old {
             values.insert(key.into(), json!(value));
         }
     });
@@ -140,7 +149,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
                             }
                             let mut kind = values.get("distribution").and_then(Json::as_str).unwrap_or("uniform").to_string();
                             let label = ui.label("Distribution:");
-                            egui::ComboBox::from_id_salt(("distribution", index))
+                            egui::ComboBox::from_id_salt(format!("distribution_{index}"))
                                 .selected_text(distribution_label(&kind))
                                 .show_ui(ui, |ui| {
                                     for k in ["uniform", "triangular", "normal", "lognormal", "poisson", "binomial", "hypergeometric"] {
@@ -175,7 +184,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
         let label = ui.label("Sampling:");
         let mut method = d.values.get("method").and_then(Json::as_str).unwrap_or("random").to_string();
         let selected = if method == "latinHypercube" { "Latin Hypercube" } else { "Random Monte Carlo" };
-        egui::ComboBox::from_id_salt(("mcMethod", "sampling"))
+        egui::ComboBox::from_id_salt("mcMethod")
             .selected_text(selected)
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut method, "random".into(), "Random Monte Carlo");
@@ -199,16 +208,32 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
             .join("\n"),
         _ => String::new(),
     };
-    let matrix_response = ui.add(egui::TextEdit::multiline(&mut matrix).desired_rows(2).desired_width(510.0)).labelled_by(matrix_label.id);
+    let old_converted = matrix.clone();
+    let matrix_response = ui.add(
+        egui::TextEdit::multiline(&mut matrix)
+            .desired_rows(2)
+            .desired_width(510.0)
+            .id_source("mc_correlation_matrix")
+    )
+    .labelled_by(matrix_label.id);
     let mut multiline_focused = matrix_response.has_focus();
-    if matrix_response.changed() {
+    if matrix_response.changed() && matrix != old_converted {
         d.values.insert("correlation".into(), json!(matrix));
     }
     let outputs_label = ui.label("Output cells, one per line (e.g. Model!F30). Qualify references to other sheets.");
-    let mut outputs = d.values.get("outputs").and_then(Json::as_str).unwrap_or("").to_string();
-    let outputs_response = ui.add(egui::TextEdit::multiline(&mut outputs).desired_rows(2).desired_width(510.0)).labelled_by(outputs_label.id);
+    let old_outputs = d.values.get("outputs")
+        .and_then(Json::as_str)
+        .unwrap_or("");
+    let mut outputs = old_outputs.to_string();
+    let outputs_response = ui.add(
+        egui::TextEdit::multiline(&mut outputs)
+            .desired_rows(2)
+            .desired_width(510.0)
+            .id_source("mc_outputs_multiline")
+    )
+    .labelled_by(outputs_label.id);
     multiline_focused |= outputs_response.has_focus();
-    if outputs_response.changed() {
+    if outputs_response.changed() && outputs != old_outputs {
         d.values.insert("outputs".into(), json!(outputs));
     }
     ui.horizontal(|ui| {
