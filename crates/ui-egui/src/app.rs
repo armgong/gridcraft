@@ -255,9 +255,6 @@ impl SheetApp {
                 });
             }
         });
-        if !analysis_active {
-            dialogs::show(self, &ctx);
-        }
         // An existing message owns Enter/Escape before the underlying dialog.
         // A newly created message is still shown in the same frame (#2189).
         let had_message = self.message.is_some();
