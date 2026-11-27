@@ -258,10 +258,18 @@ impl SheetApp {
         if !analysis_active {
             dialogs::show(self, &ctx);
         }
-        analysis_ui::show(self, &ctx);
+        // An existing message owns Enter/Escape before the underlying dialog.
+        // A newly created message is still shown in the same frame (#2189).
+        let had_message = self.message.is_some();
+        if had_message {
+            widgets::message_box(self, &ctx);
+        }
+        dialogs::show(self, &ctx);
         macro_ui::forget_closed_editor(self);
         macro_ui::question_box(self, &ctx);
-        widgets::message_box(self, &ctx);
+        if !had_message {
+            widgets::message_box(self, &ctx);
+        }
         widgets::toast(self, &ctx);
         // Last, so its resize cursors win over the widgets under the window edges.
         ribbon::window_frame(self, &ctx);
