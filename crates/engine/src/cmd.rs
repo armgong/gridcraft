@@ -21,6 +21,7 @@ pub mod monte_carlo;
 pub mod pivot;
 pub mod print;
 pub mod python;
+pub mod quick_analysis;
 pub mod review;
 pub mod sheet;
 pub mod slicer;
@@ -194,6 +195,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(actuarial_report::specs());
         v.extend(analysis_job::specs());
         v.extend(print::specs());
+        v.extend(quick_analysis::specs());
         v
     })
 }

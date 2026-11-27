@@ -16,8 +16,11 @@ pub(super) fn about(ui: &mut egui::Ui, d: &mut Dialog) {
         "Contributors" => crate::credits::contributors_ui(ui, lang),
         "Models" => crate::credits::models_ui(ui, lang),
         _ => {
-            ui.heading("GridCraft");
-            ui.label(format!("{} {}", lang.tr("Version"), env!("CARGO_PKG_VERSION")));
+            ui.heading(crate::channel::name());
+            ui.label(format!("{} {}", lang.tr("Version"), crate::channel::version()));
+            if let Some(commit) = crate::channel::commit() {
+                ui.label(egui::RichText::new(format!("Built from {commit}")).small());
+            }
             ui.add_space(4.0);
             ui.label(lang.tr("A clean-room, open-source, Rust-native spreadsheet. Part of ArtCraft."));
             ui.hyperlink_to("getartcraft.com/apps/gridcraft", "https://getartcraft.com/apps/gridcraft");

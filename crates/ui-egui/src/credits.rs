@@ -221,8 +221,8 @@ pub fn contributors_ui(ui: &mut egui::Ui, lang: crate::i18n::Language) {
             }
         }
         ui.separator();
-        ui.label(lang.tr("Sort"));
-        craft_ui::ComboBox::from_id_salt("credits_sort").selected_text(lang.tr(v.key.label().0)).show_ui(ui, |ui| {
+        ui.label("Sort");
+        egui::ComboBox::from_id_salt("credits_sort").selected_text(lang.tr(v.key.label().0)).show_ui(ui, |ui| {
             for k in SortKey::ALL {
                 if ui.selectable_label(v.key == k, lang.tr(k.label().0)).clicked() {
                     v.key = k;
