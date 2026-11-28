@@ -752,7 +752,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
         let mut put = |r: u32, c: u32, v: Value, style: StyleId| {
             sheet.set_cell(CellRef::new(r, c), Cell { value: v, formula: None, style, py: None });
         };
-        put(0, 0, Value::text("蒙特卡罗模拟"), bold);
+        put(0, 0, Value::text("蒙特卡洛模拟"), bold);
         put(
             1,
             0,
@@ -764,7 +764,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
         put(
             2,
             0,
-            Value::text(format!("迭代次数: {iterations}；随机数种子:{seed}。随机数种子控制输入与MC.* v1流；不控制 RAND / NOW。")),
+            Value::text(format!("迭代次数: {iterations}；随机数种子:{seed}。随机数种子控制输入与MC.* v1流；不控制RAND/NOW函数。")),
             StyleId::DEFAULT,
         );
         put(3, 0, Value::text("复用模拟配置"), bold);
