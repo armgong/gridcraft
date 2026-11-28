@@ -126,7 +126,15 @@ impl Accuracy {
             let pse = sp / (replicas as f64).sqrt();
             // A zero estimated variance of rare-event replica proportions is not proof of p=0 or p=1.
             let pci = if pse > 0.0 { interval(prob, factor * pse).map(|(a, b)| (a.max(0.0), b.min(1.0))) } else { None };
-            (se, pse, interval(mean, factor * se), pci, replicas, "Independent LHS replicas; Student t approximation")
+            (
+                se,
+                pse,
+                interval(mean, factor * se),
+                pci,
+                replicas,
+                // 🔤 TRANSLATED
+                "独立 LHS 副本；t 分布近似",
+            )
         } else {
             let se = sd / (n as f64).sqrt();
             let factor = t_critical(n - 1)?;
@@ -136,7 +144,8 @@ impl Accuracy {
                 interval(mean, factor * se),
                 Some(wilson(successes, n)?),
                 n,
-                "IID Monte Carlo; Student t mean / Wilson probability",
+                // 🔤 TRANSLATED
+                "独立同分布蒙特卡洛；均值采用 t 分布 / 概率采用 Wilson 区间",
             )
         };
         if mean_ci.is_none() {
@@ -147,7 +156,30 @@ impl Accuracy {
     /// Serializes error estimates and explicitly distinguishes unavailable probability bounds
     /// from zero tail risk. Relative mean error is absent for zero/unrepresentable denominators.
     fn json(&self) -> Json {
-        json!({"cell":self.label,"samples":self.n,"independentUnits":self.units,"mean":self.mean,"meanMCSE":self.se,"meanCI95":self.mean_ci,"probabilityAboveZero":self.prob,"probabilityMCSE":self.prob_se,"probabilityCI95":self.prob_ci,"method":self.method,"probabilityIntervalAvailable":self.prob_ci.is_some(),"probabilityIntervalNote":if self.prob_ci.is_none(){Some("Replica proportions have no observed variation; confidence interval unavailable. This does not prove zero tail risk.")}else{None},"relativeMeanMCSE":if self.mean!=0.0{(self.se/self.mean.abs()).is_finite().then_some(self.se/self.mean.abs())}else{None}})
+        json!({
+            "cell":self.label,
+            "samples":self.n,
+            "independentUnits":self.units,
+            "mean":self.mean,
+            "meanMCSE":self.se,
+            "meanCI95":self.mean_ci,
+            "probabilityAboveZero":self.prob,
+            "probabilityMCSE":self.prob_se,
+            "probabilityCI95":self.prob_ci,
+            "method":self.method,
+            "probabilityIntervalAvailable":self.prob_ci.is_some(),
+            "probabilityIntervalNote":if self.prob_ci.is_none(){
+                // 🔤 TRANSLATED
+                Some("副本比例无观测差异，置信区间不可用。这不证明尾部风险为零。")
+            }else{
+                None
+            },
+            "relativeMeanMCSE":if self.mean!=0.0{
+                (self.se/self.mean.abs()).is_finite().then_some(self.se/self.mean.abs())
+            }else{
+                None
+            }
+        })
     }
 }
 struct Pair {
@@ -223,21 +255,23 @@ impl Diagnostics {
             r,
             0,
             Value::text(
-                "Sampling error: 95% intervals estimate numerical error, not business uncertainty. Student t is approximate for non-normal or small samples.",
+                // 🔤 TRANSLATED
+                "抽样误差：95% 区间估计数值模拟误差，不是业务不确定性。对于非正态或小样本，t 分布仅为近似。",
             ),
             bold,
         );
         r += 1;
         for (c, h) in [
-            "Output",
-            "Mean MCSE",
-            "Mean CI95 lower",
-            "Mean CI95 upper",
-            "P(>0) MCSE",
-            "P(>0) CI95 lower",
-            "P(>0) CI95 upper",
-            "Independent units",
-            "Inference method",
+            // 🔤 TRANSLATED
+            "输出变量",
+            "均值标准误",
+            "均值 95% 置信下限",
+            "均值 95% 置信上限",
+            "P(>0) 标准误",
+            "P(>0) 95% 置信下限",
+            "P(>0) 95% 置信上限",
+            "独立单元数",
+            "推断方法",
         ]
         .iter()
         .enumerate()
@@ -269,17 +303,32 @@ impl Diagnostics {
                 r,
                 0,
                 Value::text(
-                    "Blank LHS probability intervals mean replica proportions had no variation; do not interpret this as zero tail risk. Increase independent replicas.",
+                    // 🔤 TRANSLATED
+                    "空白 LHS 概率区间表示副本比例无观测差异，不代表尾部风险为零；请增加独立副本数量。",
                 ),
                 normal,
             );
             r += 1;
         }
         r += 1;
-        put(r, 0, Value::text("Convergence trace: complete prefixes / independent LHS replicas, not an automatic stopping guarantee."), bold);
+        put(r, 0, Value::text(
+            // 🔤 TRANSLATED
+            "收敛轨迹：完整前缀样本 / 独立 LHS 副本，不代表自动收敛判定。"), bold);
         r += 1;
         for (c, h) in
-            ["Output", "Samples", "Mean", "Mean MCSE", "Mean CI95 lower", "Mean CI95 upper", "P(>0)", "Independent units"].iter().enumerate()
+            [
+                // 🔤 TRANSLATED
+                "输出变量",
+                "样本量",
+                "均值",
+                "均值标准误",
+                "均值 95% 置信下限",
+                "均值 95% 置信上限",
+                "P(>0)",
+                "独立单元数",
+            ]
+                .iter()
+                .enumerate()
         {
             put(r, c as u32, Value::text(*h), bold);
         }
@@ -290,7 +339,15 @@ impl Diagnostics {
         for a in &self.trace {
             put(r, 0, Value::text(a.label.as_str()), normal);
             for (c, v) in
-                [Some(a.n as f64), Some(a.mean), Some(a.se), a.mean_ci.map(|x| x.0), a.mean_ci.map(|x| x.1), Some(a.prob), Some(a.units as f64)]
+                [
+                    Some(a.n as f64),
+                    Some(a.mean),
+                    Some(a.se),
+                    a.mean_ci.map(|x| x.0),
+                    a.mean_ci.map(|x| x.1),
+                    Some(a.prob),
+                    Some(a.units as f64),
+                ]
                     .into_iter()
                     .enumerate()
             {
@@ -303,12 +360,23 @@ impl Diagnostics {
             r,
             0,
             Value::text(
-                "Input dependence: requested latent Gaussian correlation vs observed sample correlations. These differ for non-normal marginals.",
+                // 🔤 TRANSLATED
+                "输入相关性：设定隐高斯相关系数 vs 样本观测相关系数；非正态边缘分布下二者会不一致。",
             ),
             bold,
         );
         r += 1;
-        for (c, h) in ["Input 1", "Input 2", "Requested latent correlation", "Observed Pearson", "Observed Spearman"].iter().enumerate() {
+        for (c, h) in [
+            // 🔤 TRANSLATED
+            "输入变量 1",
+            "输入变量 2",
+            "设定隐相关系数",
+            "观测皮尔逊相关系数",
+            "观测斯皮尔曼相关系数",
+        ]
+            .iter()
+            .enumerate()
+        {
             put(r, c as u32, Value::text(*h), bold);
         }
         r += 1;

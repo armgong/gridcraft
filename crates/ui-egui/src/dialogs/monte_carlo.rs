@@ -142,13 +142,13 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
                             if d.refs.target.as_deref() != Some(&key) {
                                 d.values.insert(key.clone(), values.get("cell").cloned().unwrap_or(json!("")));
                             }
-                            let label = ui.label("Cell:");
+                            let label = ui.label("单元格:");
                             ref_edit(app, ui, d, &key, RefLabel::By(label.id), 140.0);
                             if let Some(value) = d.values.get(&key) {
                                 values.insert("cell".into(), value.clone());
                             }
                             let mut kind = values.get("distribution").and_then(Json::as_str).unwrap_or("uniform").to_string();
-                            let label = ui.label("Distribution:");
+                            let label = ui.label("分布:");
                             egui::ComboBox::from_id_salt(format!("distribution_{index}"))
                                 .selected_text(distribution_label(&kind))
                                 .show_ui(ui, |ui| {

@@ -135,7 +135,7 @@ pub(super) fn data(app: &mut SheetApp, ui: &mut Ui) {
         app.open_dialog("analysisToolPak", json!({}));
     }
     sep(ui);
-    if big_button(ui, Icon::ChartScatter, "Monte\nCarlo", "Monte Carlo", false).clicked() {
+    if big_button(ui, Icon::ChartScatter, "蒙特卡洛", "蒙特卡洛模拟", false).clicked() {
         app.open_dialog("monteCarlo", json!({}));
     }
     sep(ui);

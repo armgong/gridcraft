@@ -742,7 +742,7 @@ impl Dialog {
             "monteCarlo" => {
                 let mut d = Dialog::custom(
                     "monteCarlo",
-                    "Monte Carlo Simulation",
+                    "蒙特卡洛模拟",
                     json!({
                         "inputs": [monte_carlo::input_template(&active)],
                         "outputs": "", "iterations": "1000", "seed": "0", "samples": true, "method": "latinHypercube", "replicates": "8", "correlation": "",
