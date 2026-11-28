@@ -771,7 +771,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
         put(3, 1, Value::text(config.to_string()), StyleId::DEFAULT);
         put(4, 0, Value::text("Seeded worksheet sampling"), bold);
         put(4, 1, Value::text(stochastic.json().to_string()), StyleId::DEFAULT);
-        for (c, h) in ["Output", "Mean", "Sample standard deviation", "Minimum", "P10", "P50", "P90", "Maximum", "Probability > 0"].iter().enumerate()
+        for (c, h) in ["输出项", "均值", "样本标准差", "最小值", "P10", "P50", "P90", "最大值", "大于 0 的概率"].iter().enumerate()
         {
             put(5, c as u32, Value::text(*h), bold);
         }
@@ -783,17 +783,17 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             }
         }
         let t = outputs.len() as u32 + 9;
-        put(t - 1, 0, Value::text("Conditional tornado: first output, same Monte Carlo samples; tied deciles may contain more than 10%."), bold);
+        put(t - 1, 0, Value::text("条件龙卷风：取第一个输出，使用同一批蒙特卡洛样本；绑定分位数的分组可能包含超过 10% 的样本。"), bold);
         for (c, h) in [
-            "Input",
-            "Spearman",
-            "Low-group median",
-            "High-group median",
-            "Adverse vs median",
-            "Favorable vs median",
-            "Span",
-            "Low group size",
-            "High group size",
+            "输入变量",
+            "斯皮尔曼相关系数",
+            "低分组中位数",
+            "高分组中位数",
+            "不利值相对中位数偏移",
+            "有利值相对中位数偏移",
+            "区间跨度",
+            "低分组样本量",
+            "高分组样本量",
         ]
         .iter()
         .enumerate()
@@ -809,9 +809,8 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             }
         }
         let (diagnostics_end, trace_start, trace_end) = diagnostics.write(&mut put, t + sensitivity.len() as u32 + 3, bold);
-        // Ascending helper rows put the most influential input at the top of a native bar chart.
         let helper = 28;
-        for (c, h) in ["Input", "Adverse", "Favorable"].iter().enumerate() {
+        for (c, h) in ["输入变量", "不利偏移", "有利偏移"].iter().enumerate() {
             put(helper, 12 + c as u32, Value::text(*h), bold);
         }
         for (r, a) in sensitivity.iter().rev().enumerate() {
@@ -821,7 +820,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
         }
         if keep_samples {
             let start = diagnostics_end + 2;
-            put(start, 0, Value::text("Iteration"), bold);
+            put(start, 0, Value::text("迭代序号"), bold);
             for (c, a) in inputs.iter().map(|i| &i.label).chain(outputs.iter().map(|o| &o.label)).enumerate() {
                 put(start, c as u32 + 1, Value::text(a.as_str()), bold);
             }
@@ -840,7 +839,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             id: chart_id,
             kind: ChartKind::BarStacked,
             anchor: Anchor { cell: CellRef::new(0, 12), width: 640.0, height: 420.0, ..Default::default() },
-            title: Some("Monte Carlo conditional tornado".into()),
+            title: Some("蒙特卡洛条件龙卷风图".into()),
             series: (13..=14)
                 .map(|col| Series {
                     name: Some(format!("{q}!${}${}", if col == 13 { "N" } else { "O" }, helper + 1)),
@@ -853,7 +852,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             data_labels: false,
             gridlines: true,
             style: 1,
-            x_title: Some("Change from overall median".into()),
+            x_title: Some("相对总体中位数的变化".into()),
             y_title: None,
             source: None,
             by_rows: false,
@@ -862,7 +861,7 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             hole_size: 75,
             first_slice_angle: 0,
         });
-        let trace_series = [(2, "Mean"), (4, "Mean CI95 lower"), (5, "Mean CI95 upper")]
+        let trace_series = [(2, "均值"), (4, "均值 95% 置信区间下限"), (5, "均值 95% 置信区间上限")]
             .into_iter()
             .map(|(col, label)| {
                 let letter = gridcraft_core::col_to_letters(col);
@@ -878,13 +877,13 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
             id: convergence_id,
             kind: ChartKind::LineMarkers,
             anchor: Anchor { cell: CellRef::new(helper + sensitivity.len() as u32 + 5, 12), width: 640.0, height: 360.0, ..Default::default() },
-            title: Some("Mean convergence and 95% sampling-error interval".into()),
+            title: Some("均值收敛与 95% 抽样误差区间".into()),
             series: trace_series,
             legend: LegendPos::Bottom,
             data_labels: false,
             gridlines: true,
             style: 1,
-            x_title: Some("Completed samples".into()),
+            x_title: Some("已完成样本数".into()),
             y_title: None,
             source: None,
             by_rows: false,
