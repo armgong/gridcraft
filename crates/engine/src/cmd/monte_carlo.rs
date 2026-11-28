@@ -752,24 +752,24 @@ fn write_report(s: &mut Session, report: Report<'_>) -> Result<()> {
         let mut put = |r: u32, c: u32, v: Value, style: StyleId| {
             sheet.set_cell(CellRef::new(r, c), Cell { value: v, formula: None, style, py: None });
         };
-        put(0, 0, Value::text("Monte Carlo simulation"), bold);
+        put(0, 0, Value::text("蒙特卡罗模拟"), bold);
         put(
             1,
             0,
             Value::text(
-                "Static snapshot. Percentiles describe outcomes; confidence intervals describe sampling error. Conditional tornado is not a causal effect.",
+                "静态快照。百分位数描述输出结果；置信区间描述抽样误差。条件龙卷风图不代表因果效应。",
             ),
             StyleId::DEFAULT,
         );
         put(
             2,
             0,
-            Value::text(format!("Iterations: {iterations}; seed: {seed}. Seed controls inputs and MC.* streams v1; not RAND/NOW.")),
+            Value::text(format!("迭代次数: {iterations}；随机数种子:{seed}。随机数种子控制输入与MC.* v1流；不控制 RAND / NOW。")),
             StyleId::DEFAULT,
         );
-        put(3, 0, Value::text("Reusable configuration (JSON)"), bold);
+        put(3, 0, Value::text("复用模拟配置"), bold);
         put(3, 1, Value::text(config.to_string()), StyleId::DEFAULT);
-        put(4, 0, Value::text("Seeded worksheet sampling"), bold);
+        put(4, 0, Value::text("带种子的工作表采样"), bold);
         put(4, 1, Value::text(stochastic.json().to_string()), StyleId::DEFAULT);
         for (c, h) in ["输出项", "均值", "样本标准差", "最小值", "P10", "P50", "P90", "最大值", "大于 0 的概率"].iter().enumerate()
         {
