@@ -6,36 +6,36 @@ use super::{Dialog, Json, Map, SheetApp, json};
 /// Invalid or edited report data is left to the user rather than silently run as defaults.
 pub(super) fn saved_configuration(sheet: &gridcraft_engine::model::Sheet) -> Option<Result<Json, &'static str>> {
     use gridcraft_engine::core::{CellRef, Value};
-    if !matches!(sheet.value(CellRef::new(0, 0)), Value::Text(ref t) if t.as_ref() == "Monte Carlo simulation")
-        || !matches!(sheet.value(CellRef::new(3, 0)), Value::Text(ref t) if t.as_ref() == "Reusable configuration (JSON)")
+    if !matches!(sheet.value(CellRef::new(0, 0)), Value::Text(ref t) if t.as_ref() == "蒙特卡洛模拟")
+        || !matches!(sheet.value(CellRef::new(3, 0)), Value::Text(ref t) if t.as_ref() == "复用模拟配置")
     {
         return None;
     }
-    let Value::Text(text) = sheet.value(CellRef::new(3, 1)) else { return Some(Err("The saved Monte Carlo configuration is missing.")) };
-    Some(serde_json::from_str::<Json>(&text).ok().filter(Json::is_object).ok_or("The saved Monte Carlo configuration is invalid."))
+    let Value::Text(text) = sheet.value(CellRef::new(3, 1)) else { return Some(Err("保存的模拟配置丢失")) };
+    Some(serde_json::from_str::<Json>(&text).ok().filter(Json::is_object).ok_or("保存的模拟配置无效"))
 }
 
 /// Converts the stored output list to the dialog's line editor while retaining other settings.
 pub(super) fn load_configuration(dialog: &mut Dialog, config: Json) -> Result<(), &'static str> {
-    let mut values = config.as_object().cloned().ok_or("The saved Monte Carlo configuration is invalid.")?;
+    let mut values = config.as_object().cloned().ok_or("保存的模拟配置无效")?;
     let outputs = values
         .get("outputs")
         .and_then(Json::as_array)
         .filter(|outputs| !outputs.is_empty() && outputs.len() <= 64)
-        .ok_or("The saved Monte Carlo outputs are invalid.")?;
-    let lines = outputs.iter().map(Json::as_str).collect::<Option<Vec<_>>>().ok_or("The saved Monte Carlo outputs are invalid.")?;
+        .ok_or("保存的模拟输出无效")?;
+    let lines = outputs.iter().map(Json::as_str).collect::<Option<Vec<_>>>().ok_or("保存的模拟输出无效")?;
     if !values
         .get("inputs")
         .and_then(Json::as_array)
         .is_some_and(|inputs| !inputs.is_empty() && inputs.len() <= 32 && inputs.iter().all(Json::is_object))
     {
-        return Err("The saved Monte Carlo inputs are invalid.");
+        return Err("保存的模拟输入无效");
     }
     let outputs_text = lines.join("\n");
     values.insert("outputs".into(), json!(outputs_text));
     values.remove("newSheet");
     dialog.values = values;
-    dialog.title = "Edit Monte Carlo Simulation".into();
+    dialog.title = "编辑蒙特卡洛模拟".into();
     Ok(())
 }
 
@@ -75,13 +75,13 @@ fn text(ui: &mut egui::Ui, values: &mut Map<String, Json>, key: &str, label: &st
 /// Names distributions without presenting log-space parameters as arithmetic moments.
 fn distribution_label(kind: &str) -> &str {
     match kind {
-        "uniform" => "Uniform",
-        "triangular" => "Triangular",
-        "normal" => "Normal",
-        "lognormal" => "Lognormal (arithmetic mean / CV)",
-        "poisson" => "Poisson count",
-        "binomial" => "Binomial count",
-        "hypergeometric" => "Hypergeometric count",
+        "uniform" => "均匀分布",
+        "triangular" => "三角分布",
+        "normal" => "正态分布",
+        "lognormal" => "对数正态分布",
+        "poisson" => "泊松分布",
+        "binomial" => "二项计数分布",
+        "hypergeometric" => "超几何计数分布",
         _ => kind,
     }
 }
@@ -89,15 +89,15 @@ fn distribution_label(kind: &str) -> &str {
 /// Lists scalar parameters and defaults; existing values survive distribution changes.
 fn distribution_fields(kind: &str) -> &'static [(&'static str, &'static str, &'static str)] {
     match kind {
-        "normal" => &[("mean", "Mean:", "0"), ("stdDev", "Standard deviation:", "1")],
-        "lognormal" => &[("mean", "Arithmetic mean:", "1"), ("cv", "CV (SD / mean):", "0.1")],
-        "poisson" => &[("mean", "Mean events:", "10")],
-        "binomial" => &[("trials", "Trials (integer):", "10"), ("probability", "Success probability:", "0.5")],
+        "normal" => &[("mean", "均值:", "0"), ("stdDev", "标准差:", "1")],
+        "lognormal" => &[("mean", "算术均值:", "1"), ("cv", "变异系数 (标准差/均值):", "0.1")],
+        "poisson" => &[("mean", "平均事件数:", "10")],
+        "binomial" => &[("trials", "试验次数:", "10"), ("probability", "成功概率:", "0.5")],
         "hypergeometric" => {
-            &[("draws", "Draws (integer):", "10"), ("successes", "Population successes:", "20"), ("population", "Population size:", "100")]
+            &[("draws", "样本量:", "10"), ("successes", "总体中的成功个体数:", "20"), ("population", "总体规模:", "100")]
         }
-        "triangular" => &[("min", "Minimum:", "0"), ("mode", "Mode:", "0.5"), ("max", "Maximum:", "1")],
-        _ => &[("min", "Minimum:", "0"), ("max", "Maximum:", "1")],
+        "triangular" => &[("min", "最小:", "0"), ("mode", "众数:", "0.5"), ("max", "最大:", "1")],
+        _ => &[("min", "最小:", "0"), ("max", "最大:", "1")],
     }
 }
 
@@ -127,7 +127,7 @@ pub(super) fn sync_collapsed_input(d: &mut Dialog, key: &str) {
 /// formulas. Replica settings apply only to LHS; confirmation delegates validation to the engine.
 pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &mut bool, open: &mut bool) {
     ui.label(
-        "Choose numeric input cells and formula outputs. Source values are kept unchanged; optional correlation is on latent Gaussian variables.",
+        "选择数值输入单元格及输出单元格。原始输入单元格的值不会被改写；可选的相关系数，作用于隐高斯变量上。"
     );
     ui.separator();
     let mut inputs = d.values.get("inputs").and_then(Json::as_array).cloned().unwrap_or_default();
@@ -159,7 +159,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
                                 .response
                                 .labelled_by(label.id);
                             values.insert("distribution".into(), json!(kind));
-                            if ui.button("Remove").clicked() {
+                            if ui.button("删除").clicked() {
                                 remove = Some(index);
                             }
                         });
@@ -174,30 +174,30 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
         d.refs.target = None;
         d.refs.collapsed = None;
     }
-    if inputs.len() < 32 && ui.button("Add input").clicked() {
+    if inputs.len() < 32 && ui.button("添加输入").clicked() {
         inputs.push(input_template(""));
     }
     d.values.insert("inputs".into(), json!(inputs));
-    ui.label("For conditional counts and monthly AR1 processes, use MC.* worksheet functions with IF(MC.ACTIVE(), sample, baseline).");
+    ui.label("对于条件计数以及月度一阶自回归（AR1）过程，请使用MC.*工作表函数，并配合IF(MC.ACTIVE(), 抽样值, 基准值)。");
     ui.separator();
     ui.horizontal(|ui| {
-        let label = ui.label("Sampling:");
+        let label = ui.label("抽样:");
         let mut method = d.values.get("method").and_then(Json::as_str).unwrap_or("random").to_string();
-        let selected = if method == "latinHypercube" { "Latin Hypercube" } else { "Random Monte Carlo" };
+        let selected = if method == "latinHypercube" { "拉丁超立方" } else { "随机蒙特卡洛" };
         egui::ComboBox::from_id_salt("mcMethod")
             .selected_text(selected)
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut method, "random".into(), "Random Monte Carlo");
-                ui.selectable_value(&mut method, "latinHypercube".into(), "Latin Hypercube");
+                ui.selectable_value(&mut method, "random".into(), "随机蒙特卡洛");
+                ui.selectable_value(&mut method, "latinHypercube".into(), "拉丁超立方");
             })
             .response
             .labelled_by(label.id);
         if method == "latinHypercube" {
-            text(ui, &mut d.values, "replicates", "Independent replicas:");
+            text(ui, &mut d.values, "replicates", "独立重复批次:");
         }
         d.values.insert("method".into(), json!(method));
     });
-    let matrix_label = ui.label("Correlation matrix in input order (blank = independent). Rows on separate lines, numbers separated by spaces. Gaussian latent correlations, not marginal Pearson targets.");
+    let matrix_label = ui.label("按输入顺序填写相关矩阵（空白 = 独立），每行一条，空格分隔数值；是隐高斯相关，不是皮尔逊相关。");
     let mut matrix = match d.values.get("correlation") {
         Some(Json::String(s)) => s.clone(),
         Some(Json::Array(rows)) => rows
@@ -220,7 +220,7 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
     if matrix_response.changed() && matrix != old_converted {
         d.values.insert("correlation".into(), json!(matrix));
     }
-    let outputs_label = ui.label("Output cells, one per line (e.g. Model!F30). Qualify references to other sheets.");
+    let outputs_label = ui.label("输出单元格，每行一个（示例：Model!F30）, 跨工作表引用时，带上工作表名称.");
     let old_outputs = d.values.get("outputs")
         .and_then(Json::as_str)
         .unwrap_or("");
@@ -237,14 +237,14 @@ pub(super) fn form(app: &SheetApp, ui: &mut egui::Ui, d: &mut Dialog, confirm: &
         d.values.insert("outputs".into(), json!(outputs));
     }
     ui.horizontal(|ui| {
-        text(ui, &mut d.values, "iterations", "Iterations:");
-        text(ui, &mut d.values, "seed", "Seed:");
+        text(ui, &mut d.values, "iterations", "迭代次数:");
+        text(ui, &mut d.values, "seed", "随机数种子:");
     });
     let mut samples = d.values.get("samples").and_then(Json::as_bool).unwrap_or(true);
-    if ui.checkbox(&mut samples, "Include samples in the report").changed() {
+    if ui.checkbox(&mut samples, "在报告中包含抽样样本数据").changed() {
         d.values.insert("samples".into(), json!(samples));
     }
-    ui.label("Creates a static report with percentiles and a Monte Carlo tornado for the first output. Re-run after changing the model. Large models may take time.");
+    ui.label("生成静态报告，包含百分位结果，以及针对第一个输出变量的蒙特卡洛龙卷风图。修改模型后需要重新运行；大型模型可能耗时较长。");
     super::show::ok_cancel_with_enter(ui, confirm, open, !multiline_focused);
 }
 
